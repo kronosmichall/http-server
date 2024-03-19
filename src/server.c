@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "ph/thpool.h"
+
 #define PORT 8080
 #define BUFFER_SIZE 1024
 
@@ -31,14 +33,17 @@ int main() {
     // convert int to big endian
     host_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    int bind_return_code = bind(sockfd, (struct sockaddr*) &host_addr, host_addr_len);
-    if (bind_return_code == -1) {
+    struct sockaddr_in client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
+
+    int bind_res = bind(sockfd, (struct sockaddr*) &host_addr, host_addr_len);
+    if (bind_res == -1) {
         terminate("server: bind failed");
     }
     printf("server: socked succesfully bound to address\n");
 
-    int listen_return_code = listen(sockfd, SOMAXCONN);
-    if (listen_return_code == -1) {
+    int listen_res = listen(sockfd, SOMAXCONN);
+    if (listen_res == -1) {
         terminate("server: listen failed");
     }
     printf("server: listening for connections\n");
@@ -51,6 +56,13 @@ int main() {
             perror("server: connecton not accepted");
             continue;
         }
+
+        socklen_t sockn = getsockname(newsockfd, (struct sockaddr*) &client_addr, (socklen_t *) &client_addr_len);
+        if (sockn == -1) {
+            perror("server: getsockname failed");
+            continue;
+        }
+        printf("[%s:%u]\n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
         ssize_t read_res = read(newsockfd, buffer, BUFFER_SIZE);
         if (read_res < 0) {
