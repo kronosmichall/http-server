@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include "ph/thpool.h"
 
 #define PORT 8080
@@ -13,7 +14,7 @@
 
 void terminate(char *message) {
     perror(message);
-    exit(1);
+    exit(0);
 }
 
 struct serve_info {
@@ -69,6 +70,12 @@ void serve_job(struct serve_info* serve_info) {
     serve_info->free = 1;
 }
 
+static volatile int keepRunning = 1;
+
+void handle_sigint(int signum) {
+    keepRunning = 0;
+}
+
 int main(int argc, char** argv) {
     if (argc != 1 && argc != 3) {
         terminate("Wrong amount of args!");
@@ -99,6 +106,8 @@ int main(int argc, char** argv) {
     if (bind_res == -1) {
         terminate("server: bind failed");
     }
+    signal(SIGINT, handle_sigint);
+    
     printf("server: socked succesfully bound to address\n");
 
     int listen_res = listen(sockfd, SOMAXCONN);
@@ -118,8 +127,8 @@ int main(int argc, char** argv) {
     }
 
     uint8_t thread_i = 0;
-    for (;;) {
-        while (serve_infos[thread_i].free == 0) {
+    while (keepRunning) {
+        while (keepRunning && serve_infos[thread_i].free == 0) {
             thread_i++;
             if (thread_i == thread_count) {
                 thread_i = 0;
@@ -129,5 +138,6 @@ int main(int argc, char** argv) {
         thpool_add_work(thpool, (void *)serve_job, &serve_infos[thread_i]);
     }
 
+    close(sockfd);
     return 0;
 }
