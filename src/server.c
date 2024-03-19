@@ -27,29 +27,30 @@ struct serve_info {
     char buffer[BUFFER_SIZE];
 };
 
+void quit_job(struct serve_info* serve_info, int sockfd, char *message) {
+    perror(message);
+    close(sockfd);
+    serve_info->free = 1;
+}
+
 void serve_job(struct serve_info* serve_info) {
     memset(serve_info->buffer, 0, BUFFER_SIZE);
     int newsockfd = accept(serve_info->sockfd, (struct sockaddr*) &serve_info->host_addr, (socklen_t *) &serve_info->host_addr_len);
     if (newsockfd < 0) {
-        perror("server: connecton not accepted");
-        serve_info->free = 1;
+        quit_job(serve_info, newsockfd, "server: connecton not accepted");
         return;
     }
 
     int sockn = getsockname(newsockfd, (struct sockaddr*) &serve_info->client_addr, (socklen_t *) &serve_info->client_addr_len);
     if (sockn == -1) {
-        perror("server: getsockname failed");
-        close(newsockfd);
-        serve_info->free = 1;
+        quit_job(serve_info, newsockfd, "server: getsockname failed");
         return;
     }
     printf("[%s:%u]\n", inet_ntoa(serve_info->client_addr.sin_addr), ntohs(serve_info->client_addr.sin_port));
 
     ssize_t read_res = read(newsockfd, serve_info->buffer, BUFFER_SIZE);
     if (read_res < 0) {
-        perror("server: read failed");
-        close(newsockfd);
-        serve_info->free = 1;
+        quit_job(serve_info, newsockfd, "server: read failed");
         return;
     }
 
@@ -60,18 +61,14 @@ void serve_job(struct serve_info* serve_info) {
     ssize_t write_res = write(newsockfd, resp, strlen(resp));
     if (write_res < 0) {
         perror("server: write failed");
-        close(newsockfd);
-        serve_info->free = 1;
         return;
     }
 
-    printf("server: connection accepted\n");
-    close(newsockfd);
-    serve_info->free = 1;
+    quit_job(serve_info, newsockfd, "server: connection accepted");
 }
 
 static volatile int keepRunning = 1;
-void handle_sigint(int signum) {
+void handle_sigint(int) {
     keepRunning = 0;
 }
 
