@@ -71,7 +71,6 @@ void serve_job(struct serve_info* serve_info) {
 }
 
 static volatile int keepRunning = 1;
-
 void handle_sigint(int signum) {
     keepRunning = 0;
 }
