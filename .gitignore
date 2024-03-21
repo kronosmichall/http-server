@@ -1,2 +1,3 @@
 build/
 test/*.o
+test/html_parser_test
