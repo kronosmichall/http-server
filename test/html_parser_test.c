@@ -15,6 +15,33 @@ void test_read_file() {
     assert(result == 0);
 }
 
+#define EQ(expected, actual) \
+    do { \
+        if (actual != expected) { \
+            fprintf(stderr, "%s:%d: Assertion failed:\n Expected %d and got %d\n", __FILE__, __LINE__, expected, actual); \
+            exit(0); \
+        } \
+    } while (0)
+
+void test_str_index() {
+    int i = str_index("hello world", "world");
+    EQ(6, i);
+    i = str_index("hello world", "hello");
+    EQ(0, i);
+    i = str_index("hello world", "hello world");
+    EQ(0, i);
+    i = str_index("hello world", "hello world!");
+    EQ(-1, i);
+    i = str_index("hello world", "");
+    EQ(-1, i);
+    i = str_index("", "hello world");
+    EQ(-1, i);
+    i = str_index("", "");
+    EQ(-1, i);
+    i = str_index("hello world", "he??");
+    EQ(-1, i);
+}
+
 void test_remove_comments_simple() {
     char *html = "<!-- comment -->";
     char *new_html = remove_comments(html);
@@ -39,6 +66,7 @@ int main() {
     test_read_file();
     test_remove_comments_simple();
     test_remove_comments_from_file();
+    test_str_index();
 
     return 0;
 }

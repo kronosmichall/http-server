@@ -34,7 +34,7 @@ int str_index(char *str, char *substr) {
 
     size_t len = strlen(str);
     size_t sublen = strlen(substr);
-    if (len < sublen) {
+    if (len < sublen || sublen == 0) {
         return -1;
     }
 
@@ -77,16 +77,12 @@ char *remove_comments(char *html) {
     return new_html;
 }
 
-char* append_deps(char *html) {
-    // int head_index = str_index(html, "<head>");
-    // int head_end_index = str_index(html, "</head>");
-    // if (head_index == -1 || head_end_index == -1) {
-    //     return html;
-    // }
+#define CSS_LINK "<link rel=\"stylesheet\""
 
-    // // its not accually full head bucause it skips </head>
-    // char *head = malloc(head_end_index - head_index + 1);
-    // strncpy(head, html + head_index, head_end_index - head_index);
+char* append_styles(char *html) {
+    return NULL;
+}
 
+char* append_scripts(char *html) {
     return NULL;
 }
