@@ -1,6 +1,7 @@
 #include "html_parser.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 char* read_file(char *path) {
     FILE *f = fopen(path, "rb");
@@ -24,4 +25,68 @@ char* read_file(char *path) {
     fclose(f);
 
     return buffer;
+}
+
+int str_index(char *str, char *substr) {
+    if (str == NULL || substr == NULL){
+        return -1;
+    }
+
+    size_t len = strlen(str);
+    size_t sublen = strlen(substr);
+    if (len < sublen) {
+        return -1;
+    }
+
+    for (size_t i = 0; i < len - sublen; i++) {
+        if (strncmp(str + i, substr, sublen) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+#define COM_START "<!--"
+#define COM_END "-->"
+
+char *remove_comments(char *html) {
+    size_t html_len = strlen(html);
+    char *new_html = malloc(html_len + 1);
+
+    int is_com = 0;
+    size_t index = 0;
+
+    for (size_t i = 0; i < html_len; i++) {
+        if (is_com) {
+            int cmp = strncmp(html + i, COM_END, strlen(COM_END));
+            if (cmp == 0) {
+                is_com = 0;
+                i += strlen(COM_END) - 1;
+            }
+        } else {
+            int cmp = strncmp(html + i, COM_START, strlen(COM_START));
+            if (cmp == 0) {
+                is_com = 1;
+                i += strlen(COM_START) - 1;
+            } else {
+                new_html[index++] = html[i];
+            }
+        }
+    }
+    new_html[index] = '\0';
+    return new_html;
+}
+
+char* append_deps(char *html) {
+    // int head_index = str_index(html, "<head>");
+    // int head_end_index = str_index(html, "</head>");
+    // if (head_index == -1 || head_end_index == -1) {
+    //     return html;
+    // }
+
+    // // its not accually full head bucause it skips </head>
+    // char *head = malloc(head_end_index - head_index + 1);
+    // strncpy(head, html + head_index, head_end_index - head_index);
+
+    return NULL;
 }

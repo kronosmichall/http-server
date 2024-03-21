@@ -7,7 +7,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+
 #include "ph/thpool.h"
+#include "html_parser.h"
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -56,14 +58,20 @@ void serve_job(struct serve_info* serve_info) {
 
     char resp[] =   "HTTP/1.0 200 OK\r\n"
                     "Server: webserver-c\r\n"
-                    "Content-type: text/html\r\n\r\n"
-                    "<html>hello, world</html>\r\n";
+                    "Content-type: text/html\r\n\r\n";
     ssize_t write_res = write(newsockfd, resp, strlen(resp));
     if (write_res < 0) {
         perror("server: write failed");
         return;
     }
-
+    
+    char *html_str = read_file("../src/html/index/index.html");
+    write_res = write(newsockfd, html_str, strlen(html_str));
+    free(html_str);
+    if (write_res < 0) {
+        perror("server: write failed");
+        return;
+    }
     quit_job(serve_info, newsockfd, "server: connection accepted");
 }
 
