@@ -3,12 +3,34 @@
 #include <stdlib.h>
 #include <string.h>
 
-char* read_file(char *path) {
-    FILE *f = fopen(path, "rb");
-    if (!f) {
-        printf("Cannot open file: %s\n", path);
+#define HTML_PATH "/httpServer/src/html/"
+
+char *read_file(char *path, char *suffix) {
+    FILE *f;
+    char *full_path_str;
+    char *relative_path;
+
+    if (suffix == NULL) {
+        relative_path = "";
+    } else {
+        relative_path = suffix;
+    }
+
+    char *home_dir = getenv("HOME");
+    full_path_str = calloc(1, strlen(home_dir) + strlen(HTML_PATH) + strlen(relative_path) + strlen(path) + 1);
+    strcpy(full_path_str, home_dir);
+    strcat(full_path_str, HTML_PATH);
+    strcat(full_path_str, relative_path);
+    strcat(full_path_str, path);
+
+    printf("opened file %s\n", full_path_str);
+    f = fopen(full_path_str, "rb");
+    if (!f) {   
+        printf("Cannot open file: %s\n", full_path_str);
+        free(full_path_str);
         return NULL;
     }
+    free(full_path_str);
 
     fseek(f, 0, SEEK_END);
     long flen = ftell(f);
@@ -16,7 +38,7 @@ char* read_file(char *path) {
 
     char *buffer = calloc(1, flen + 1);
     if (buffer == NULL) {
-        printf("Cannot allocate memory for the buffer\n");
+        printf("Cannot allocate %ld memory for the buffer\n", flen + 1);
         fclose(f);
         return NULL;
     }
@@ -28,7 +50,7 @@ char* read_file(char *path) {
 }
 
 int str_index(char *str, char *substr) {
-    if (str == NULL || substr == NULL){
+    if (str == NULL || substr == NULL) {
         return -1;
     }
 
@@ -38,7 +60,7 @@ int str_index(char *str, char *substr) {
         return -1;
     }
 
-    for (size_t i = 0; i < len - sublen; i++) {
+    for (size_t i = 0; i < len - sublen + 1; i++) {
         if (strncmp(str + i, substr, sublen) == 0) {
             return i;
         }
@@ -78,11 +100,56 @@ char *remove_comments(char *html) {
 }
 
 #define CSS_LINK "<link rel=\"stylesheet\""
+#define SPACE ' '
+#define HREF "href=\""
 
-char* append_styles(char *html) {
-    return NULL;
+// to jest w sumie kwadratowe - trzeba zrobić struct string który będzie miał długość i wskaźnik na char*
+void append_styles(char *html, char *html_path) {
+    size_t html_len = strlen(html);
+    int i = 0, css_start, css_end, href_start, href_end;
+    char *css_path, *css_str;
+
+    while (i < html_len) {
+        css_start = str_index(html + i, CSS_LINK);
+        if (css_start == -1) {
+            return;
+        }
+        css_end = str_index(html + i + css_start, ">") + 1;
+        if (css_end == -1) {
+            return;
+        }
+        href_start = str_index(html + i, HREF);
+        if (href_start == -1) {
+            return;
+        }
+        href_end = str_index(html + i + href_start + strlen(HREF), "\"");
+        if (href_end == -1) {
+            return;
+        }
+
+        css_path = calloc(1, href_end + 1);
+        memcpy(css_path, html + i + href_start + strlen(HREF), href_end);
+        printf("css_path %s\n", css_path);
+
+        css_str = read_file(css_path, "index/");
+        if (css_str == NULL) {
+            return;
+        }
+
+        printf("css style %s\n", css_str);
+
+        free(css_str);
+        free(css_path);
+
+        printf("html len: %ld\n", html_len);
+        printf("i: %d\n", i);
+        printf("css_start: %d, css_end: %d\n", css_start, css_end);
+
+        
+        // memset(html + i + css_start, SPACE, css_end);
+        i = css_end;
+    }
 }
 
-char* append_scripts(char *html) {
-    return NULL;
+void append_scripts(char *html) {
 }

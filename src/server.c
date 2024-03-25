@@ -65,7 +65,7 @@ void serve_job(struct serve_info* serve_info) {
         return;
     }
     
-    char *html_str = read_file("../src/html/index/index.html");
+    char *html_str = read_file("index.html", "index/");
     write_res = write(newsockfd, html_str, strlen(html_str));
     free(html_str);
     if (write_res < 0) {
