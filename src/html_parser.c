@@ -102,54 +102,81 @@ char *remove_comments(char *html) {
 #define CSS_LINK "<link rel=\"stylesheet\""
 #define SPACE ' '
 #define HREF "href=\""
+#define STYLE_TAG "<style>"
+#define STYLE_TAG_END "</style>"
 
 // to jest w sumie kwadratowe - trzeba zrobić struct string który będzie miał długość i wskaźnik na char*
-void append_styles(char *html, char *html_path) {
+struct html_parts append_styles(char *html, char *html_path) {
+    struct html_parts html_parts = {
+        .html = { NULL },
+        .size = 0
+    };
     size_t html_len = strlen(html);
     int i = 0, css_start, css_end, href_start, href_end;
     char *css_path, *css_str;
 
     while (i < html_len) {
         css_start = str_index(html + i, CSS_LINK);
-        if (css_start == -1) {
-            return;
-        }
+        if (css_start == -1) break;
+
         css_end = str_index(html + i + css_start, ">") + 1;
-        if (css_end == -1) {
-            return;
-        }
+        if (css_end == -1) break;
+
         href_start = str_index(html + i, HREF);
-        if (href_start == -1) {
-            return;
-        }
+        if (href_start == -1) break;
+
         href_end = str_index(html + i + href_start + strlen(HREF), "\"");
-        if (href_end == -1) {
-            return;
-        }
+        if (href_end == -1) break;
 
         css_path = calloc(1, href_end + 1);
         memcpy(css_path, html + i + href_start + strlen(HREF), href_end);
-        printf("css_path %s\n", css_path);
 
         css_str = read_file(css_path, "index/");
-        if (css_str == NULL) {
-            return;
-        }
+        if (css_str == NULL) break;
 
-        printf("css style %s\n", css_str);
-
+        char *css_str_styled = calloc(1, strlen(css_str) + strlen(STYLE_TAG) + strlen(STYLE_TAG_END) + 1);
+        strcpy(css_str_styled, STYLE_TAG);
+        strcat(css_str_styled, css_str);
+        strcat(css_str_styled, STYLE_TAG_END);
         free(css_str);
-        free(css_path);
 
+        printf("css_path %s\n", css_path);
+        printf("css_str %s\n", css_str);
         printf("html len: %ld\n", html_len);
         printf("i: %d\n", i);
         printf("css_start: %d, css_end: %d\n", css_start, css_end);
-
         
-        // memset(html + i + css_start, SPACE, css_end);
-        i = css_end;
+        char *html_part = calloc(1, html_len - i - css_start);
+        memcpy(html_part, html + i, css_start);
+        html_parts_insert(&html_parts, html_part);
+        html_parts_insert(&html_parts, css_str_styled);
+        free(css_path);
+
+        i += css_start + css_end;
     }
+
+    if (i < html_len) {
+        char *html_part = calloc(1, strlen(html + i) + 1);
+        strcpy(html_part, html + i);
+        html_parts_insert(&html_parts, html_part);
+    }
+    return html_parts;
 }
 
 void append_scripts(char *html) {
+}
+
+void html_parts_insert(struct html_parts *html_parts, char *html) {
+    if (html_parts->size >= 2 * MAX_CSS_LINKS_IN_FILE + 1) {
+        return;
+    }
+    html_parts->html[html_parts->size++] = html;
+}
+
+void free_html_parts(struct html_parts *html_parts) {
+    for (size_t i = 0; i < html_parts->size; i++) {
+        free(html_parts->html[i]);
+        html_parts->html[i] = NULL;
+    }
+    html_parts->size = 0;
 }

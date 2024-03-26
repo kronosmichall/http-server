@@ -66,12 +66,17 @@ void serve_job(struct serve_info* serve_info) {
     }
     
     char *html_str = read_file("index.html", "index/");
-    write_res = write(newsockfd, html_str, strlen(html_str));
-    free(html_str);
-    if (write_res < 0) {
-        perror("server: write failed");
-        return;
+    struct html_parts html_parts = append_styles(html_str, "index/");
+    for (size_t i = 0; i < html_parts.size; i++) {
+        write(newsockfd, html_parts.html[i], strlen(html_parts.html[i]));
+        if (write_res < 0) {
+            perror("server: write failed");
+            return;
+        }
     }
+
+    free(html_str);
+    free_html_parts(&html_parts);
     quit_job(serve_info, newsockfd, "server: connection accepted");
 }
 

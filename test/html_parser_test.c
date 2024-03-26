@@ -1,24 +1,24 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "html_parser.h"
 
-#define EQ(expected, actual) \
-    do { \
-        if (actual != expected) { \
+#define EQ(expected, actual)                                                                                              \
+    do {                                                                                                                  \
+        if (actual != expected) {                                                                                         \
             fprintf(stderr, "%s:%d: Assertion failed:\n Expected %d and got %d\n", __FILE__, __LINE__, expected, actual); \
-            exit(0); \
-        } \
+            exit(0);                                                                                                      \
+        }                                                                                                                 \
     } while (0)
 
-#define NEQ(expected, actual) \
-    do { \
-        if (actual == expected) { \
+#define NEQ(expected, actual)                                                                               \
+    do {                                                                                                    \
+        if (actual == expected) {                                                                           \
             fprintf(stderr, "%s:%d: Assertion failed:\n Expected not %d \n", __FILE__, __LINE__, expected); \
-            exit(0); \
-        } \
+            exit(0);                                                                                        \
+        }                                                                                                   \
     } while (0)
 
 void test_read_file() {
@@ -70,13 +70,33 @@ void test_remove_comments_from_file() {
 }
 
 void test_append_styles_simple() {
-    char no_style[] = "<div>hello world</div>";
-    append_styles(no_style, NULL);
-    printf("no style resulted in: %s\n", no_style);
+    char *no_style_str = "<div>hello world</div>";
+    char *no_style_html = calloc(1, strlen(no_style_str) + 1);
+    strcpy(no_style_html, no_style_str);
 
-    char style[] = "lala <link rel=\"stylesheet\" href=\"assets/css/noscript.css\" /> lala";
-    append_styles(style, "index/");
-    printf("style resulted in: %s\n", style);
+    struct html_parts no_style = append_styles(no_style_html, NULL);
+    EQ(1, no_style.size);
+    EQ(0, strcmp(no_style.html[0], no_style_str));
+
+    for (int i = 0; i < no_style.size; i++) {
+        printf("no_style html[%d]: %s\n", i, no_style.html[i]);
+    }
+
+    char *style_str = "lala<link rel=\"stylesheet\" href=\"assets/css/noscript.css\" />lala";
+    char *style_html = calloc(1, strlen(style_str) + 1);
+    strcpy(style_html, style_str);
+    struct html_parts style = append_styles(style_html, "index/");
+
+    for (int i = 0; i < style.size; i++) {
+        printf("style html[%d]: %s\n", i, style.html[i]);
+    }
+    
+    EQ(3, style.size);
+    EQ(0, strcmp(style.html[0], "lala"));
+    EQ(0, strcmp(style.html[2], "lala"));
+
+    free_html_parts(&no_style);
+    free_html_parts(&style);
 }
 
 int main() {
