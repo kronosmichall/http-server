@@ -135,7 +135,7 @@ struct html_parts append_styles(char *html, char *html_path) {
         if (css_str == NULL) break;
 
         char *css_str_styled = calloc(1, strlen(css_str) + strlen(STYLE_TAG) + strlen(STYLE_TAG_END) + 1);
-        strcpy(css_str_styled, STYLE_TAG);
+        strcat(css_str_styled, STYLE_TAG);
         strcat(css_str_styled, css_str);
         strcat(css_str_styled, STYLE_TAG_END);
         free(css_str);
